@@ -11,7 +11,7 @@ class ReportGenerator {
         params: ModelParameters
     ): String {
         val sb = StringBuilder()
-        sb.append("BBC НАДЕЖДНОСТ - АНАЛИЗАТОРСКИ ОТЧЕТ\n")
+        sb.append("SRGM - АНАЛИЗАТОРСКИ ОТЧЕТ\n")
         sb.append("====================================\n\n")
         
         sb.append("1. РЕЗЮМЕ ЗА РЪКОВОДСТВОТО\n")
@@ -30,7 +30,6 @@ class ReportGenerator {
         sb.append("----------------------------------\n")
         sb.append("Алфа (Очакван общ брой откази): ${params.alpha.format(2)}\n")
         sb.append("Бета (Скорост на откриване на грешки): ${params.beta.format(4)}\n")
-        params.phi?.let { sb.append("Фи (Инфлексионен фактор): ${it.format(4)}\n") }
         sb.append("\n")
         
         sb.append("4. КАЧЕСТВО НА ПРИЛЯГАНЕТО\n")

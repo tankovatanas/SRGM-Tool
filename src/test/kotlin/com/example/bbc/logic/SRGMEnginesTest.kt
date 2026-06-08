@@ -164,12 +164,12 @@ class SRGMEnginesTest {
         viewModel.loadData(csv)
         val records = viewModel.records.value
         assertEquals(2, records.size)
-        // Should be sorted by time (8.0, 62.0) and failures accumulated (25, 25+5=30):
-        // Record 0: time = 8.0, failures = 25
-        // Record 1: time = 62.0, failures = 30
-        assertEquals(8.0, records[0].timeUnit, 1e-6)
-        assertEquals(25, records[0].cumulativeFailures)
-        assertEquals(62.0, records[1].timeUnit, 1e-6)
+        // Should be accumulated sequentially (Interpretation B):
+        // Record 0: time = 62.0, failures = 5
+        // Record 1: time = 70.0, failures = 30
+        assertEquals(62.0, records[0].timeUnit, 1e-6)
+        assertEquals(5, records[0].cumulativeFailures)
+        assertEquals(70.0, records[1].timeUnit, 1e-6)
         assertEquals(30, records[1].cumulativeFailures)
     }
 
@@ -233,4 +233,90 @@ class SRGMEnginesTest {
             println("SORTED ACCUMULATED - Engine: ${engine::class.simpleName}, alpha: ${params.alpha}, beta: ${params.beta}, phi: ${params.phi}, rSq: ${params.rSq}, adjRSq: ${params.adjRSq}, aic: ${params.aic}")
         }
     }
+
+    @Test
+    fun testT39FromUrlFitting() {
+        val url = java.net.URL("https://raw.githubusercontent.com/Derek-Jones/Reliability-data/refs/heads/main/T39.csv")
+        val csvContent = url.readText()
+        
+        // Parse raw records to verify
+        val reader = java.io.StringReader(csvContent)
+        val parser = org.apache.commons.csv.CSVFormat.DEFAULT.builder()
+            .setHeader()
+            .setSkipHeaderRecord(true)
+            .build()
+            .parse(reader)
+            
+        val records = mutableListOf<ReliabilityTestRecord>()
+        for (record in parser) {
+            val cpuHour = record.get("CPU_hour").trim().toDoubleOrNull() ?: 0.0
+            val failures = if (record.isMapped("Failures") && record.size() > 2) {
+                record.get("Failures").trim().toIntOrNull() ?: 0
+            } else 0
+            records.add(ReliabilityTestRecord(cpuHour, failures))
+        }
+        
+        // Sort and accumulate
+        val sorted = records.sortedBy { it.timeUnit }
+        val accumulated = mutableListOf<ReliabilityTestRecord>()
+        var cumFailures = 0
+        for (rec in sorted) {
+            cumFailures += rec.cumulativeFailures
+            accumulated.add(ReliabilityTestRecord(rec.timeUnit, cumFailures))
+        }
+        
+        val engines = listOf(
+            GoelOkumotoEngine(),
+            JelinskiMorandaEngine(),
+            YamadaExponentialEngine(),
+            DelayedSShapedEngine(),
+            SchickWolvertonEngine()
+        )
+        for (engine in engines) {
+            val params = engine.fit(accumulated)
+            println("URL FIT SORTED - Engine: ${engine::class.simpleName}, alpha: ${params.alpha}, beta: ${params.beta}, phi: ${params.phi}, rSq: ${params.rSq}, adjRSq: ${params.adjRSq}, aic: ${params.aic}, bic: ${params.bic}")
+        }
+        
+        // Chronological (Sequential) accumulated
+        val accumulatedSeq = mutableListOf<ReliabilityTestRecord>()
+        var cumTime = 0.0
+        var cumFailuresSeq = 0
+        for (rec in records) {
+            cumTime += rec.timeUnit
+            cumFailuresSeq += rec.cumulativeFailures
+            accumulatedSeq.add(ReliabilityTestRecord(cumTime, cumFailuresSeq))
+        }
+        
+        for (engine in engines) {
+            val params = engine.fit(accumulatedSeq)
+            println("URL FIT SEQ - Engine: ${engine::class.simpleName}, alpha: ${params.alpha}, beta: ${params.beta}, phi: ${params.phi}, rSq: ${params.rSq}, adjRSq: ${params.adjRSq}, aic: ${params.aic}, bic: ${params.bic}")
+        }
+    }
+
+    @Test
+    fun testPrintSortedAccumulated() {
+        val url = java.net.URL("https://raw.githubusercontent.com/Derek-Jones/Reliability-data/refs/heads/main/T39.csv")
+        val csvContent = url.readText()
+        val reader = java.io.StringReader(csvContent)
+        val parser = org.apache.commons.csv.CSVFormat.DEFAULT.builder()
+            .setHeader()
+            .setSkipHeaderRecord(true)
+            .build()
+            .parse(reader)
+        val records = mutableListOf<ReliabilityTestRecord>()
+        for (record in parser) {
+            val cpuHour = record.get("CPU_hour").trim().toDoubleOrNull() ?: 0.0
+            val failures = if (record.isMapped("Failures") && record.size() > 2) {
+                record.get("Failures").trim().toIntOrNull() ?: 0
+            } else 0
+            records.add(ReliabilityTestRecord(cpuHour, failures))
+        }
+        val sorted = records.sortedBy { it.timeUnit }
+        var cumFailures = 0
+        for ((idx, rec) in sorted.withIndex()) {
+            cumFailures += rec.cumulativeFailures
+            println("SORTED KOTLIN $idx: time: ${rec.timeUnit}, failures: ${rec.cumulativeFailures}, cumFailures: $cumFailures")
+        }
+    }
 }
+

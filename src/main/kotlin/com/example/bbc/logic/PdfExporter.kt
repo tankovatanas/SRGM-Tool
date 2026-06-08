@@ -49,7 +49,7 @@ class AndroidPdfExporter(private val context: Context) : PdfExporter {
             var yPos = margin
 
             yPos = drawHeader(canvas, yPos)
-            yPos = drawTitle(canvas, "BBC НАДЕЖДНОСТ — АНАЛИЗАТОРСКИ ОТЧЕТ", yPos)
+            yPos = drawTitle(canvas, "SRGM НАДЕЖДНОСТ — АНАЛИЗАТОРСКИ ОТЧЕТ", yPos)
             yPos += 20f
 
             val sections = parseSections(summaryContent)
@@ -69,7 +69,7 @@ class AndroidPdfExporter(private val context: Context) : PdfExporter {
             drawFooter(canvas, pageNumber)
             document.finishPage(page)
 
-            val file = File(context.cacheDir, "Анализ.pdf")
+            val file = File(context.cacheDir, "Отчет.pdf")
             FileOutputStream(file).use { document.writeTo(it) }
 
             val uri: Uri = FileProvider.getUriForFile(
@@ -84,7 +84,7 @@ class AndroidPdfExporter(private val context: Context) : PdfExporter {
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
-            context.startActivity(Intent.createChooser(intent, "Запазване на Анализ.pdf").apply {
+            context.startActivity(Intent.createChooser(intent, "Запазване на Отчет.pdf").apply {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             })
         } catch (e: Exception) {

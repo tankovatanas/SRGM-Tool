@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import org.apache.commons.csv.CSVFormat
 import java.io.StringReader
 import java.net.URL
+import kotlin.time.Duration.Companion.milliseconds
 
 enum class AppState {
     IDLE, DATA_LOADING, VALIDATION_COMPLETE, CALCULATING_PARAMETERS, READY_FOR_REPORT, ERROR
@@ -128,7 +129,7 @@ class BBCViewModel {
         if (_state.value == AppState.READY_FOR_REPORT || _state.value == AppState.CALCULATING_PARAMETERS) {
             analysisJob?.cancel()
             analysisJob = viewModelScope.launch {
-                delay(200)
+                delay(200.milliseconds)
                 runAnalysis()
             }
         }
@@ -185,12 +186,13 @@ class BBCViewModel {
         if (isCumulative) {
             return rawRecords
         }
-        val sorted = rawRecords.sortedBy { it.timeUnit }
         val accumulated = mutableListOf<ReliabilityTestRecord>()
+        var cumTime = 0.0
         var cumFailures = 0
-        for (rec in sorted) {
+        for (rec in rawRecords) {
+            cumTime += rec.timeUnit
             cumFailures += rec.cumulativeFailures
-            accumulated.add(ReliabilityTestRecord(rec.timeUnit, cumFailures))
+            accumulated.add(ReliabilityTestRecord(cumTime, cumFailures))
         }
         return accumulated
     }

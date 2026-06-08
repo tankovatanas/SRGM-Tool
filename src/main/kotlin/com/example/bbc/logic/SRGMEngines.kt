@@ -47,7 +47,6 @@ abstract class BaseMLEEngine : SRGMEngine {
             
             val alpha = fittedParams[0]
             val beta = fittedParams[1]
-            val phi = if (fittedParams.size > 2) fittedParams[2] else null
 
             // SSE = Sum of Squared Errors
             val sse = optimum.cost.pow(2.0)
@@ -79,7 +78,6 @@ abstract class BaseMLEEngine : SRGMEngine {
             ModelParameters(
                 alpha = alpha,
                 beta = beta,
-                phi = phi,
                 aic = aic,
                 bic = bic,
                 rSq = rSq,
