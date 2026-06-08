@@ -155,7 +155,7 @@ class DelayedSShapedEngine : BaseMLEEngine() {
             records,
             { t, p -> p[0] * (1 - (1 + p[1] * t) * exp(-p[1] * t)) },
             { t, p -> doubleArrayOf(1 - (1 + p[1] * t) * exp(-p[1] * t), p[0] * p[1] * t * t * exp(-p[1] * t)) },
-            doubleArrayOf(n * 1.5, 0.03), // Различни начални условия
+            doubleArrayOf(n * 1.5, 0.03),
             2.0
         )
     }

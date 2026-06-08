@@ -8,7 +8,6 @@ data class ReliabilityTestRecord(
 data class ModelParameters(
     val alpha: Double,
     val beta: Double,
-    val phi: Double? = null,
     val aic: Double = 0.0,
     val bic: Double = 0.0,
     val rSq: Double = 0.0,
